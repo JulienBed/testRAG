@@ -93,16 +93,6 @@
       <version>1.0.0-alpha1</version>
     </dependency>
 
-    <!-- ===== LangChain4j : Easy RAG (chunking + embedding store automatique) ===== -->
-    <!--
-      Fournit : DocumentSplitter, EmbeddingStoreIngestor, RetrievalAugmentor.
-      C'est le coeur du pipeline RAG.
-    -->
-    <dependency>
-      <groupId>io.quarkiverse.langchain4j</groupId>
-      <artifactId>quarkus-langchain4j-easy-rag</artifactId>
-    </dependency>
-
     <!-- ===== Vector store en mémoire (core LangChain4j) ===== -->
     <!--
       InMemoryEmbeddingStore est fourni par le module dev.langchain4j:langchain4j (core),

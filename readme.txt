@@ -158,11 +158,11 @@ Composants :
   Ajuster la créativité du LLM (0.0 = déterministe, 1.0 = créatif) :
     quarkus.langchain4j.ollama.chat-model.temperature=0.3
 
-  Nombre de résultats RAG retournés :
-    quarkus.langchain4j.easy-rag.max-results=5
+  Nombre de résultats RAG retournés (dans RagConfiguration.java) :
+    .maxResults(5)   → EmbeddingStoreContentRetriever
 
-  Seuil de similarité cosinus minimum (0.0 à 1.0) :
-    quarkus.langchain4j.easy-rag.min-score=0.5
+  Seuil de similarité cosinus minimum (dans RagConfiguration.java) :
+    .minScore(0.5)   → valeur entre 0.0 et 1.0
 
 --------------------------------------------------------------------------------
   MODÈLES OLLAMA — COMPARATIF
