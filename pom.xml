@@ -62,14 +62,33 @@
       <artifactId>quarkus-rest-client-jackson</artifactId>
     </dependency>
 
-    <!-- ===== LangChain4j : OpenAI LLM ===== -->
+    <!-- ===== LangChain4j : Anthropic (Claude) LLM ===== -->
     <!--
-      Fournit l'intégration avec l'API OpenAI (GPT-4, embeddings text-embedding-ada-002).
-      Configuré via quarkus.langchain4j.openai.* dans application.properties.
+      Fournit l'intégration avec l'API Anthropic (Claude Sonnet, Haiku, Opus).
+      L'API Anthropic NE fournit PAS de modèle d'embedding - uniquement du chat.
+      Configuré via quarkus.langchain4j.anthropic.* dans application.properties.
     -->
     <dependency>
       <groupId>io.quarkiverse.langchain4j</groupId>
-      <artifactId>quarkus-langchain4j-openai</artifactId>
+      <artifactId>quarkus-langchain4j-anthropic</artifactId>
+    </dependency>
+
+    <!-- ===== Modèle d'embedding local : all-MiniLM-L6-v2 (quantized) ===== -->
+    <!--
+      Modèle d'embedding GRATUIT qui tourne en local dans la JVM, sans API externe.
+      Poids du modèle inclus dans le JAR (~23 Mo).
+      Dimensions : 384 (vs 1536 pour OpenAI text-embedding-ada-002).
+      Vitesse : très rapide (CPU, pas de réseau).
+      Qualité : excellente pour la recherche sémantique multilingue.
+
+      Combinaison recommandée pour ce projet :
+        Chat/résumé  → Claude (Anthropic API, votre abonnement)
+        Embeddings   → MiniLM-L6-v2 (local, gratuit, sans latence réseau)
+    -->
+    <dependency>
+      <groupId>dev.langchain4j</groupId>
+      <artifactId>langchain4j-embeddings-all-minilm-l6-v2-q</artifactId>
+      <version>1.0.0-alpha1</version>
     </dependency>
 
     <!-- ===== LangChain4j : Easy RAG (chunking + embedding store automatique) ===== -->
@@ -82,10 +101,10 @@
       <artifactId>quarkus-langchain4j-easy-rag</artifactId>
     </dependency>
 
-    <!-- ===== Vector store en mémoire (fourni par le core LangChain4j) ===== -->
+    <!-- ===== Vector store en mémoire (core LangChain4j) ===== -->
     <!--
       InMemoryEmbeddingStore est fourni par le module dev.langchain4j:langchain4j (core),
-      lui-même transitivement inclus via quarkus-langchain4j-openai.
+      transitivement inclus via quarkus-langchain4j-anthropic.
       Il stocke les vecteurs en RAM - parfait pour un projet pédagogique.
       Pour la production : PgVector, Chroma, Weaviate, Pinecone, etc.
     -->

@@ -34,8 +34,8 @@ import java.util.List;
  *   DocumentSplitter → chunks (ex: 1000 chars + 200 overlap)
  *      │  List<TextSegment>
  *      ▼
- *   EmbeddingModel (text-embedding-ada-002)
- *      │  List<float[]> (vecteurs 1536D)
+ *   EmbeddingModel (all-MiniLM-L6-v2, local)
+ *      │  List<float[]> (vecteurs 384D)
  *      ▼
  *   EmbeddingStore (in-memory)
  *      │  Indexé pour recherche cosinus
@@ -45,8 +45,8 @@ import java.util.List;
  *
  * <h2>Qu'est-ce qu'un embedding ?</h2>
  * <p>Un embedding est une représentation numérique (vecteur flottant) d'un
- * texte dans un espace sémantique à haute dimension (ex: 1536 dimensions
- * pour text-embedding-ada-002). Deux textes ayant un sens proche auront
+ * texte dans un espace sémantique à haute dimension (384 dimensions pour
+ * all-MiniLM-L6-v2). Deux textes ayant un sens proche auront
  * des vecteurs proches (similarité cosinus élevée).</p>
  *
  * <p>Exemple : "Le chat dort" et "Le félin sommeille" auront des vecteurs
@@ -58,16 +58,16 @@ public class RagIngestionService {
     private static final Logger LOG = Logger.getLogger(RagIngestionService.class);
 
     /**
-     * EmbeddingModel injecté par Quarkus LangChain4j.
-     * Configuré dans application.properties :
-     * quarkus.langchain4j.openai.embedding-model.model-name=text-embedding-ada-002
+     * EmbeddingModel local injecté depuis {@link org.acme.rag.config.RagConfiguration}.
+     * Ici : AllMiniLmL6V2QuantizedEmbeddingModel (384 dimensions, local, gratuit).
+     * L'API Anthropic ne fournissant pas d'embedding, on utilise ce modèle ONNX embarqué.
      */
     @Inject
     EmbeddingModel embeddingModel;
 
     /**
-     * EmbeddingStore injecté par Quarkus LangChain4j.
-     * Ici : InMemoryEmbeddingStore (quarkus-langchain4j-in-process-embedding).
+     * EmbeddingStore injecté depuis {@link org.acme.rag.config.RagConfiguration}.
+     * Ici : InMemoryEmbeddingStore (en RAM, réinitialisé au redémarrage).
      * En production : PgVectorEmbeddingStore, ChromaEmbeddingStore, etc.
      */
     @Inject
