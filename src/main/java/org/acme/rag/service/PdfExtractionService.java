@@ -3,6 +3,7 @@ package org.acme.rag.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.acme.rag.model.DocumentChunk;
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.io.RandomAccessReadBuffer;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.jboss.logging.Logger;
@@ -71,9 +72,10 @@ public class PdfExtractionService {
                                             String fileName) throws IOException {
         LOG.infof("Début de l'extraction du PDF : %s", fileName);
 
-        byte[] pdfBytes = pdfInputStream.readAllBytes();
-
-        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+        // RandomAccessReadBuffer lit le flux directement sans créer de byte[] intermédiaire.
+        // Avec readAllBytes() + Loader.loadPDF(byte[]), le tableau brut et le buffer PDFBox
+        // coexistaient en mémoire ; ici, un seul buffer interne est alloué.
+        try (PDDocument document = Loader.loadPDF(new RandomAccessReadBuffer(pdfInputStream))) {
             int pageCount = document.getNumberOfPages();
             LOG.infof("PDF chargé : %d page(s)", pageCount);
 
@@ -81,7 +83,7 @@ public class PdfExtractionService {
             String rawText = extractRawText(document);
             LOG.debugf("Texte brut extrait : %d caractères", rawText.length());
 
-            // Étape 2 : nettoyage du texte
+            // Étape 2 : nettoyage du texte (libère rawText dès que possible)
             String cleanText = cleanText(rawText);
             LOG.debugf("Texte nettoyé : %d caractères", cleanText.length());
 
@@ -109,25 +111,72 @@ public class PdfExtractionService {
     }
 
     /**
-     * Nettoie le texte extrait du PDF :
-     * <ul>
-     *   <li>Supprime les caractères de contrôle non-imprimables</li>
-     *   <li>Normalise les espaces (tabulations → espaces)</li>
-     *   <li>Réduit les lignes vides consécutives à une seule</li>
-     *   <li>Supprime les espaces en début/fin</li>
-     * </ul>
+     * Nettoie le texte extrait en un seul passage sur les caractères.
+     *
+     * <p>La version précédente chaînait quatre {@code replaceAll()} : chaque appel
+     * crée une copie complète de la chaîne, soit ~4× la taille du texte brut
+     * en mémoire transitoire. Pour un PDF de 5 Mo de texte, cela représente
+     * ~20 Mo d'objets {@code String} temporaires pouvant déclencher un OOM.</p>
+     *
+     * <p>Cette implémentation lit {@code rawText} une seule fois et écrit dans
+     * un {@code StringBuilder} pré-alloué, produisant une unique copie finale.</p>
      */
     private String cleanText(String rawText) {
-        return rawText
-                // Supprime les caractères non-imprimables sauf newlines et tabs
-                .replaceAll("[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]", "")
-                // Normalise les tabulations
-                .replace("\t", " ")
-                // Réduit les espaces multiples sur une même ligne
-                .replaceAll(" {2,}", " ")
-                // Réduit les lignes vides consécutives
-                .replaceAll("(\r?\n){3,}", "\n\n")
-                .trim();
+        int len = rawText.length();
+        StringBuilder sb = new StringBuilder(len);
+
+        int consecutiveNewlines = 0;
+        int consecutiveSpaces   = 0;
+
+        for (int i = 0; i < len; i++) {
+            char c = rawText.charAt(i);
+
+            // Caractères de contrôle non-imprimables (sauf \t \n \r)
+            if ((c <= 0x08) || (c == 0x0B) || (c == 0x0C) || (c >= 0x0E && c <= 0x1F) || c == 0x7F) {
+                continue;
+            }
+
+            // Tabulation → espace
+            if (c == '\t') c = ' ';
+
+            // Retour chariot (\r) : ignore seul, laisse le \n suivant gérer CRLF
+            if (c == '\r') {
+                continue;
+            }
+
+            if (c == '\n') {
+                consecutiveSpaces = 0;
+                consecutiveNewlines++;
+                // Réduit les sauts de ligne consécutifs à deux au maximum
+                if (consecutiveNewlines <= 2) {
+                    sb.append('\n');
+                }
+                continue;
+            }
+
+            if (c == ' ') {
+                consecutiveNewlines = 0;
+                consecutiveSpaces++;
+                // Réduit les espaces consécutifs à un seul
+                if (consecutiveSpaces == 1) {
+                    sb.append(' ');
+                }
+                continue;
+            }
+
+            // Caractère normal
+            consecutiveNewlines = 0;
+            consecutiveSpaces   = 0;
+            sb.append(c);
+        }
+
+        // Trim : supprimer les espaces/newlines en début et fin
+        int start = 0;
+        while (start < sb.length() && sb.charAt(start) <= ' ') start++;
+        int end = sb.length();
+        while (end > start && sb.charAt(end - 1) <= ' ') end--;
+
+        return sb.substring(start, end);
     }
 
     /**
