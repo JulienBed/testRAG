@@ -60,7 +60,7 @@ public class RagIngestionService {
     /**
      * EmbeddingModel local injecté depuis {@link org.acme.rag.config.RagConfiguration}.
      * Ici : AllMiniLmL6V2QuantizedEmbeddingModel (384 dimensions, local, gratuit).
-     * L'API Anthropic ne fournissant pas d'embedding, on utilise ce modèle ONNX embarqué.
+     * On utilise ce modèle ONNX local embarqué dans le JAR - aucune API externe requise.
      */
     @Inject
     EmbeddingModel embeddingModel;
@@ -111,7 +111,7 @@ public class RagIngestionService {
                 })
                 .toList();
 
-        // Génération des embeddings via l'API OpenAI
+        // Génération des embeddings via le modèle local (all-MiniLM-L6-v2)
         LOG.infof("Appel EmbeddingModel pour %d segments...", segments.size());
         List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
 

@@ -15,12 +15,11 @@ import jakarta.enterprise.inject.Produces;
 /**
  * Configuration CDI pour le pipeline RAG.
  *
- * <h2>Architecture : Claude (LLM) + MiniLM (embeddings locaux)</h2>
+ * <h2>Architecture : Ollama (LLM local) + MiniLM (embeddings locaux)</h2>
  *
- * <p>L'API Anthropic (Claude) ne fournit pas de service d'embedding.
- * Ce projet utilise donc deux composants distincts :</p>
+ * <p>Ce projet utilise deux composants 100% locaux, sans clé API :</p>
  * <ul>
- *   <li><b>Claude Haiku/Sonnet</b> → génération du résumé (via Anthropic API)</li>
+ *   <li><b>Ollama (mistral, llama3, etc.)</b> → génération du résumé (serveur local sur :11434)</li>
  *   <li><b>all-MiniLM-L6-v2</b> → vectorisation des chunks (local, gratuit, embarqué dans le JAR)</li>
  * </ul>
  *

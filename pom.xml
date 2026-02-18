@@ -62,15 +62,17 @@
       <artifactId>quarkus-rest-client-jackson</artifactId>
     </dependency>
 
-    <!-- ===== LangChain4j : Anthropic (Claude) LLM ===== -->
+    <!-- ===== LangChain4j : Ollama (LLM local) ===== -->
     <!--
-      Fournit l'intégration avec l'API Anthropic (Claude Sonnet, Haiku, Opus).
-      L'API Anthropic NE fournit PAS de modèle d'embedding - uniquement du chat.
-      Configuré via quarkus.langchain4j.anthropic.* dans application.properties.
+      Fournit l'intégration avec Ollama (serveur local tournant des modèles open-source).
+      Aucune clé API requise - Ollama tourne sur votre machine.
+      Modèles compatibles : mistral, llama3, gemma2, phi3, etc.
+      Configuré via quarkus.langchain4j.ollama.* dans application.properties.
+      Prérequis : installer Ollama (https://ollama.com) et télécharger un modèle.
     -->
     <dependency>
       <groupId>io.quarkiverse.langchain4j</groupId>
-      <artifactId>quarkus-langchain4j-anthropic</artifactId>
+      <artifactId>quarkus-langchain4j-ollama</artifactId>
     </dependency>
 
     <!-- ===== Modèle d'embedding local : all-MiniLM-L6-v2 (quantized) ===== -->
